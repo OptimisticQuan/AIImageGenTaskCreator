@@ -48,14 +48,16 @@ export class LLMService {
   async createTasksFromPrompt(options: CreateTasksOptions): Promise<TaskPrompt[]> {
     try {
       const { mainPrompt, uploadedImagesCount} = options
-      const prompt = `根据###包裹的用户提示词创建批量生成图片任务，注意将用户的批量类词语转为“参考图 n"风格的单向任务词语，n 为单项任务中的参考图本地序号，直接用 json 输出，使用json codeblock包裹，示例
+      const prompt = `根据###包裹的用户提示词创建批量生成图片任务，注意将用户的批量类词语转为“图n"风格的单项任务词语，n为单一任务中的参考图本地序号，直接用 json 输出，使用json codeblock包裹，示例
+用户输入将所有图片转为吉卜力风格，上传了2张图片，文件名分别为0.png和1.png，生成的任务格式如下：
 [{
-"prompt": "把参考图1转为吉卜力风格",
+"prompt": "把图1转为吉卜力风格",
 "attachment": [0.png]
 }，{
-"prompt": "把参考图1转为吉卜力风格",
+"prompt": "把图1转为吉卜力风格",
 "attachment": [1.png]
 }]
+
 用户提供的文件列表为：[${Array.from({ length: uploadedImagesCount }, (_, i) => `${i}.png`).join(', ')}]，请确保每个任务都包含 prompt 字段，并且 attachment 字段包含对应的图片文件名。
 用户提示词：
 ###

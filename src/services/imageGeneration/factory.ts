@@ -22,30 +22,32 @@ export interface ImageGeneratorConfig {
 export class ImageGeneratorFactory {
   static create(config: ImageGeneratorConfig): BaseImageGenerator {
     switch (config.provider) {
-      // case 'OpenAI':
-      //   if (!config.apiKey) {
-      //     throw new Error('OpenAI API key is required')
-      //   }
-      //   return new OpenAIImageGenerator({
-      //     apiKey: config.apiKey,
-      //     baseURL: config.baseURL
-      //   })
+      case EImageGenerationProvider.OpenAI:
+        if (!config.apiKey) {
+          throw new Error('OpenAI API key is required')
+        }
+        return new OpenAIImageGenerator({
+          apiKey: config.apiKey,
+          baseURL: config.baseURL
+        })
 
-      // case 'StableDiffusion':
-      //   if (!config.baseURL) {
-      //     throw new Error('Stable Diffusion base URL is required')
-      //   }
-      //   return new StableDiffusionImageGenerator({
-      //     baseURL: config.baseURL,
-      //     modelName: config.modelName
-      //   })
-      case 'Tuzi':
+      case EImageGenerationProvider.StableDiffusion:
+        if (!config.baseURL) {
+          throw new Error('Stable Diffusion base URL is required')
+        }
+        return new StableDiffusionImageGenerator({
+          baseURL: config.baseURL,
+          modelName: config.modelName
+        })
+
+      case EImageGenerationProvider.Tuzi:
         if (!config.apiKey) {
           throw new Error('Tuzi API key is required')
         }
         return new TuziImageGenerator({
           apiKey: config.apiKey,
-          baseURL: config.baseURL
+          baseURL: config.baseURL,
+          model: config.modelName
         })
 
       default:

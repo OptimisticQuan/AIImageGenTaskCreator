@@ -5,16 +5,20 @@ import { ChatCompletionContentPart } from 'openai/resources'
 export interface TuziConfig {
   apiKey: string
   baseURL?: string
+  model?: string
 }
 
 export class TuziImageGenerator extends BaseImageGenerator {
   private client: OpenAI
+  private config: TuziConfig
 
   constructor(config: TuziConfig) {
     super()
+    this.config = config
     this.client = new OpenAI({
       apiKey: config.apiKey,
-      baseURL: config.baseURL || 'https://api.tuzi.com/v1'
+      baseURL: config.baseURL || 'https://api.tuzi.com/v1',
+      dangerouslyAllowBrowser: true
     })
   }
 
@@ -50,10 +54,9 @@ export class TuziImageGenerator extends BaseImageGenerator {
       ]
 
       const stream = await this.client.chat.completions.create({
-        model: options.model || 'dall-e-3',
+        model: options.model || this.config.model || 'gpt-4o-image',
         messages,
-        stream: true,
-        temperature: 0.7
+        stream: true
       })
 
       const imageUrls: string[] = []
@@ -126,8 +129,7 @@ export class TuziImageGenerator extends BaseImageGenerator {
     }
 
     // Handle completion with image URLs
-    const urlMatch = line.match(/\[100\]\s*\((https?:\/\/[^\s)]+)\)/) || 
-                    line.match(/(https?:\/\/[^\s]+\.(?:png|jpg|jpeg|webp))/i)
+    const urlMatch = line.match(/\[点击下载\]\((https?:\/\/[^\s)]+)\)/)
     if (urlMatch) {
       const imageUrl = urlMatch[1]
       if (imageUrl && !imageUrls.includes(imageUrl)) {

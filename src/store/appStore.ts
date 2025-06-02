@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { AppSettings, Task, UploadedImage } from '../types'
 import { DEFAULT_SETTINGS } from '../types'
+import { APIService } from '../services/api'
 
 interface AppState {
   // Settings
@@ -37,19 +38,43 @@ interface AppState {
   previewTaskIndex: number
   previewImageIndex: number
   setPreviewIndexes: (taskIndex: number, imageIndex: number) => void
+
+  // API Service instance
+  apiService: APIService | null
+  initializeApiService: () => void
 }
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Settings
       settings: DEFAULT_SETTINGS,
-      updateSettings: (newSettings: AppSettings) => {
-        set({ settings: newSettings })
-      },
 
       // Uploaded Images
       uploadedImages: [],
+
+      // Tasks
+      tasks: [],
+
+      // Processing state
+      isProcessing: false,
+
+      // Modal states
+      isSettingsModalOpen: false,
+      isImagePreviewModalOpen: false,
+      previewTaskIndex: 0,
+      previewImageIndex: 0,
+
+      // API Service instance
+      apiService: null,
+
+      updateSettings: (newSettings: AppSettings) => {
+        set({ settings: newSettings })
+        const { apiService } = get()
+        if (apiService) {
+          apiService.updateSettings(newSettings)
+        }
+      },
       addUploadedImage: (image: UploadedImage) => {
         set(state => ({
           uploadedImages: [...state.uploadedImages, image]
@@ -66,9 +91,6 @@ export const useAppStore = create<AppState>()(
       clearUploadedImages: () => {
         set({ uploadedImages: [] })
       },
-
-      // Tasks
-      tasks: [],
       addTasks: (newTasks: Task[]) => {
         set(state => ({
           tasks: [...state.tasks, ...newTasks]
@@ -89,27 +111,22 @@ export const useAppStore = create<AppState>()(
       clearTasks: () => {
         set({ tasks: [] })
       },
-
-      // Processing state
-      isProcessing: false,
       setIsProcessing: (isProcessing: boolean) => {
         set({ isProcessing })
       },
-
-      // Modal states
-      isSettingsModalOpen: false,
       setIsSettingsModalOpen: (isOpen: boolean) => {
         set({ isSettingsModalOpen: isOpen })
       },
-
-      isImagePreviewModalOpen: false,
       setIsImagePreviewModalOpen: (isOpen: boolean) => {
         set({ isImagePreviewModalOpen: isOpen })
       },
-      previewTaskIndex: 0,
-      previewImageIndex: 0,
       setPreviewIndexes: (taskIndex: number, imageIndex: number) => {
         set({ previewTaskIndex: taskIndex, previewImageIndex: imageIndex })
+      },
+      initializeApiService: () => {
+        const { settings } = get()
+        const apiService = new APIService(settings)
+        set({ apiService })
       },
     }),
     {

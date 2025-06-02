@@ -206,9 +206,10 @@ const SettingsModal: React.FC = () => {
                         onChange={(e) => handleInputChange('imageGeneration', 'supplier', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
-                        <option value="StableDiffusionWebUI">Stable Diffusion WebUI</option>
-                        <option value="OpenAI">OpenAI DALL-E</option>
-                        <option value="ComfyUI">ComfyUI</option>
+                        {/* <option value="StableDiffusionWebUI">Stable Diffusion WebUI</option>
+                        <option value="ComfyUI">ComfyUI</option> */}
+                        <option value="OpenAI">OpenAI</option>
+                        <option value="Tuzi">兔子</option>
                       </select>
                     </div>
                     

@@ -1,11 +1,11 @@
 // src/components/TaskList.tsx
 
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState, useEffect } from 'react'
 import { PlayIcon, PauseIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { useAppStore } from '../store/appStore'
 import { TaskStatus } from '../types'
 import type { GeneratedImage } from '../types'
-import { APIService } from '../services/api'
+import { GenerationProgress, GenerationResult } from '../services/imageGeneration/factory'
 import { delay } from '../utils'
 import TaskItem from './TaskItem'
 
@@ -24,8 +24,17 @@ const TaskList: React.FC = () => {
     settings,
     uploadedImages,
     setIsImagePreviewModalOpen,
-    setPreviewIndexes
+    setPreviewIndexes,
+    apiService,
+    initializeApiService
   } = useAppStore()
+
+  // Initialize API service on mount
+  useEffect(() => {
+    if (!apiService) {
+      initializeApiService()
+    }
+  }, [apiService, initializeApiService])
 
   const handleEditTask = useCallback((taskId: string, newPrompt: string) => {
     updateTask(taskId, { prompt: newPrompt })
@@ -60,15 +69,51 @@ const TaskList: React.FC = () => {
     }
   }, [tasks, setPreviewIndexes, setIsImagePreviewModalOpen])
 
+  const handleTaskProgress = useCallback((progress: GenerationProgress) => {
+    updateTask(progress.taskId, { 
+      progress: progress.progress,
+      status: progress.stage === 'completed' ? TaskStatus.Completed : TaskStatus.Generating
+    })
+  }, [updateTask])
+
+  const handleTaskComplete = useCallback((result: GenerationResult) => {
+    if (result.success) {
+      const generatedImages: GeneratedImage[] = result.images.map((url) => ({
+        id: crypto.randomUUID(),
+        url,
+      }))
+
+      updateTask(result.taskId, {
+        status: TaskStatus.Completed,
+        progress: 100,
+        generatedImages,
+        error: undefined
+      })
+    } else {
+      updateTask(result.taskId, {
+        status: TaskStatus.Failed,
+        error: result.error || '生成失败'
+      })
+    }
+
+    // Remove from currently processing set
+    currentlyProcessingRef.current.delete(result.taskId)
+    
+    // Clean up generator
+    if (apiService) {
+      apiService.removeTaskGenerator(result.taskId)
+    }
+  }, [updateTask, apiService])
+
   const processTask = useCallback(async (taskId: string) => {
     const task = tasks.find(t => t.id === taskId)
-    if (!task || task.status !== TaskStatus.Idle) return
+    if (!task || task.status !== TaskStatus.Idle || !apiService) return
 
     try {
       updateTask(taskId, { status: TaskStatus.Pending })
       
       // Wait for any currently processing tasks to reduce load
-      while (currentlyProcessingRef.current.size >= settings.batchSize) {
+      while (currentlyProcessingRef.current.size >= settings.common!.batchSize) {
         await delay(1000)
         if (isPaused) return
       }
@@ -76,33 +121,15 @@ const TaskList: React.FC = () => {
       currentlyProcessingRef.current.add(taskId)
       updateTask(taskId, { status: TaskStatus.Generating, progress: 0 })
 
-      const apiService = new APIService(settings)
-      
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        const currentTask = tasks.find(t => t.id === taskId)
-        if (currentTask?.status === TaskStatus.Generating) {
-          const currentProgress = currentTask.progress || 0
-          if (currentProgress < 90) {
-            updateTask(taskId, { progress: Math.min(90, currentProgress + Math.random() * 20) })
-          }
-        }
-      }, 2000)
+      // Create task generator with callbacks
+      apiService.createTaskGenerator(
+        taskId,
+        handleTaskProgress,
+        handleTaskComplete
+      )
 
-      const imageUrls = await apiService.generateImage(task, uploadedImages)
-      clearInterval(progressInterval)
-
-      const generatedImages: GeneratedImage[] = imageUrls.map((url) => ({
-        id: crypto.randomUUID(),
-        url,
-      }))
-
-      updateTask(taskId, {
-        status: TaskStatus.Completed,
-        progress: 100,
-        generatedImages,
-        error: undefined
-      })
+      // Start generation (the callbacks will handle progress and completion)
+      await apiService.generateImage(task, uploadedImages)
 
     } catch (error) {
       console.error('Error processing task:', error)
@@ -110,14 +137,21 @@ const TaskList: React.FC = () => {
         status: TaskStatus.Failed,
         error: error instanceof Error ? error.message : '未知错误'
       })
-    } finally {
       currentlyProcessingRef.current.delete(taskId)
+      if (apiService) {
+        apiService.removeTaskGenerator(taskId)
+      }
     }
-  }, [tasks, updateTask, settings, uploadedImages, isPaused])
+  }, [tasks, updateTask, settings, uploadedImages, isPaused, apiService, handleTaskProgress, handleTaskComplete])
 
   const startBatchProcessing = useCallback(async () => {
     if (!settings.imageGeneration.baseUrl) {
       alert('请先在设置中配置图片生成API')
+      return
+    }
+
+    if (!apiService) {
+      alert('API服务未初始化')
       return
     }
 
@@ -149,7 +183,7 @@ const TaskList: React.FC = () => {
     }
 
     processQueue()
-  }, [tasks, settings, setIsProcessing, processTask])
+  }, [tasks, settings, setIsProcessing, processTask, apiService])
 
   const pauseProcessing = useCallback(() => {
     setIsPaused(true)
@@ -187,9 +221,13 @@ const TaskList: React.FC = () => {
     }
     
     if (window.confirm('确定要清空所有任务吗？此操作不可撤销。')) {
+      // Clear all generators
+      if (apiService) {
+        apiService.clearAllGenerators()
+      }
       clearTasks()
     }
-  }, [isProcessing, clearTasks])
+  }, [isProcessing, clearTasks, apiService])
 
   const completedTasksCount = tasks.filter(task => task.status === TaskStatus.Completed).length
   const failedTasksCount = tasks.filter(task => task.status === TaskStatus.Failed).length

@@ -4,15 +4,14 @@ import {
   BaseImageGenerator, 
   ImageGeneratorFactory, 
   GenerationProgress, 
-  GenerationResult 
+  GenerationResult,
+  EImageGenerationProvider
 } from './imageGeneration/factory'
 
 export class APIService {
   private settings: AppSettings
   private llmService: LLMService
-  private imageGenerator: BaseImageGenerator | null = null
-  private onProgress?: (progress: GenerationProgress) => void
-  private onComplete?: (result: GenerationResult) => void
+  private taskGenerators: Map<string, BaseImageGenerator> = new Map()
 
   constructor(settings: AppSettings) {
     this.settings = settings
@@ -21,7 +20,6 @@ export class APIService {
       baseURL: settings.llm.baseUrl,
       modelName: settings.llm.modelName
     })
-    this.initializeImageGenerator()
   }
 
   updateSettings(settings: AppSettings) {
@@ -31,46 +29,50 @@ export class APIService {
       baseURL: settings.llm.baseUrl,
       modelName: settings.llm.modelName
     })
-    this.initializeImageGenerator()
+    // Clear existing generators as settings changed
+    this.taskGenerators.clear()
   }
 
-  setProgressCallback(callback: (progress: GenerationProgress) => void) {
-    this.onProgress = callback
-    if (this.imageGenerator) {
-      this.imageGenerator.setProgressCallback(callback)
-    }
-  }
-
-  setCompleteCallback(callback: (result: GenerationResult) => void) {
-    this.onComplete = callback
-    if (this.imageGenerator) {
-      this.imageGenerator.setCompleteCallback(callback)
-    }
-  }
-
-  private initializeImageGenerator() {
+  createTaskGenerator(
+    taskId: string,
+    onProgress: (progress: GenerationProgress) => void,
+    onComplete: (result: GenerationResult) => void
+  ): BaseImageGenerator {
     try {
       const provider = this.settings.imageGeneration.supplier === 'StableDiffusionWebUI' 
-        ? 'StableDiffusion' as const
-        : this.settings.imageGeneration.supplier as 'OpenAI' | 'StableDiffusion'
+        ? EImageGenerationProvider.StableDiffusion
+        : this.settings.imageGeneration.supplier === 'Tuzi'
+        ? EImageGenerationProvider.Tuzi
+        : EImageGenerationProvider.OpenAI
 
-      this.imageGenerator = ImageGeneratorFactory.create({
+      const generator = ImageGeneratorFactory.create({
         provider,
         apiKey: this.settings.imageGeneration.apiKey,
         baseURL: this.settings.imageGeneration.baseUrl,
         modelName: this.settings.imageGeneration.modelName
       })
 
-      if (this.onProgress) {
-        this.imageGenerator.setProgressCallback(this.onProgress)
-      }
-      if (this.onComplete) {
-        this.imageGenerator.setCompleteCallback(this.onComplete)
-      }
+      generator.setProgressCallback(onProgress)
+      generator.setCompleteCallback(onComplete)
+
+      this.taskGenerators.set(taskId, generator)
+      return generator
     } catch (error) {
-      console.error('Failed to initialize image generator:', error)
-      this.imageGenerator = null
+      console.error('Failed to create task generator:', error)
+      throw error
     }
+  }
+
+  getTaskGenerator(taskId: string): BaseImageGenerator | undefined {
+    return this.taskGenerators.get(taskId)
+  }
+
+  removeTaskGenerator(taskId: string): void {
+    this.taskGenerators.delete(taskId)
+  }
+
+  clearAllGenerators(): void {
+    this.taskGenerators.clear()
   }
 
   async createTasksFromPrompt(mainPrompt: string, uploadedImages: UploadedImage[]): Promise<Task[]> {
@@ -98,15 +100,16 @@ export class APIService {
 
   async generateImage(task: Task, uploadedImages: UploadedImage[]): Promise<string[]> {
     try {
-      if (!this.imageGenerator) {
-        throw new Error('Image generator not initialized')
+      const generator = this.getTaskGenerator(task.id)
+      if (!generator) {
+        throw new Error('Task generator not found')
       }
 
       const attachedFiles = task.attachedImageIds 
         ? uploadedImages.filter(img => task.attachedImageIds?.includes(img.id)).map(img => img.file)
         : []
 
-      const imageUrls = await this.imageGenerator.generateImages(task.id, {
+      const imageUrls = await generator.generateImages(task.id, {
         prompt: task.prompt,
         attachedImages: attachedFiles,
         count: 4,
