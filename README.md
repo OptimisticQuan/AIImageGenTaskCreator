@@ -1,0 +1,2 @@
+# AIImageGenTaskCreator
+创建图片生成批处理任务并执行的工具
