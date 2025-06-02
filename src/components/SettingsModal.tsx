@@ -126,8 +126,8 @@ const SettingsModal: React.FC = () => {
                       type="number"
                       min="1"
                       max="10"
-                      value={formData.batchSize}
-                      onChange={(e) => handleInputChange('batchSize', '', parseInt(e.target.value) || 1)}
+                      value={formData.common?.batchSize}
+                      onChange={(e) => handleInputChange('common', 'batchSize', parseInt(e.target.value) || 1)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <p className="text-xs text-gray-500 mt-1">

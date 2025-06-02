@@ -48,10 +48,15 @@ export interface ImageGenerationSettings {
   modelName?: string; // Checkpoint name for SD, model for DALL-E
 }
 
+export interface CommonSettings {
+  batchSize: number; // 批量执行每批数量
+  // 其他通用设置可以在这里添加
+}
+
 export interface AppSettings {
   llm: LLMSettings;
   imageGeneration: ImageGenerationSettings;
-  batchSize: number; // 批量执行每批数量
+  common?: CommonSettings; // 可选的通用设置
 }
 
 // Default settings structure
@@ -67,5 +72,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     apiKey: '',
     modelName: 'sd_xl_base_1.0.safetensors',
   },
-  batchSize: 3,
+  common: {
+    batchSize: 2, // Default batch size
+  }
 };

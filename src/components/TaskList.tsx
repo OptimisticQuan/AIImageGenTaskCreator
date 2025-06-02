@@ -198,7 +198,7 @@ const TaskList: React.FC = () => {
   ).length
 
   return (
-    <div className="w-full max-w-4xl h-full flex flex-col">
+    <div className="w-full h-full flex flex-col">
       {/* Fixed Header */}
       <div className="flex-shrink-0 p-6 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between">
