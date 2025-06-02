@@ -30,6 +30,16 @@ const ImagePreviewModal: React.FC = () => {
     task.status === TaskStatus.Completed && task.generatedImages.length > 0
   )
 
+  // Create flat array of all images with task info
+  const allImages = completedTasks.flatMap((task, taskIndex) => 
+    task.generatedImages.map((image, imageIndex) => ({
+      ...image,
+      taskIndex,
+      imageIndex,
+      task
+    }))
+  )
+
   const currentTask = completedTasks[previewTaskIndex]
   const currentImage = currentTask?.generatedImages[previewImageIndex]
 
@@ -133,10 +143,10 @@ const ImagePreviewModal: React.FC = () => {
     }
   }, [currentTask])
 
-  const handleImageClick = useCallback((imageIndex: number) => {
-    setPreviewIndexes(previewTaskIndex, imageIndex)
+  const handleImageClick = useCallback((taskIndex: number, imageIndex: number) => {
+    setPreviewIndexes(taskIndex, imageIndex)
     setCurrentView('single')
-  }, [previewTaskIndex, setPreviewIndexes])
+  }, [setPreviewIndexes])
 
   if (!isImagePreviewModalOpen || !currentTask) {
     return null
@@ -170,22 +180,25 @@ const ImagePreviewModal: React.FC = () => {
                 <PhotoIcon className="h-5 w-5" />
               </button>
               
-              <button
-                onClick={handleDownloadCurrent}
-                className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
-                title="下载当前图片"
-                disabled={currentView === 'gallery'}
-              >
-                <ArrowDownTrayIcon className="h-5 w-5" />
-              </button>
+              {currentView === 'single' && (
+                <button
+                  onClick={handleDownloadCurrent}
+                  className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  title="下载当前图片"
+                >
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                </button>
+              )}
               
-              <button
-                onClick={handleDownloadAll}
-                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-                title="下载所有图片"
-              >
-                下载全部
-              </button>
+              {currentView === 'gallery' && (
+                <button
+                  onClick={handleDownloadAll}
+                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                  title="下载所有图片"
+                >
+                  下载全部
+                </button>
+              )}
               
               <button
                 onClick={handleClose}
@@ -253,23 +266,25 @@ const ImagePreviewModal: React.FC = () => {
               /* Gallery View */
               <div className="p-4 max-h-[600px] overflow-y-auto">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {currentTask.generatedImages.map((image, index) => (
+                  {allImages.map((imageInfo, index) => (
                     <div
-                      key={image.id}
+                      key={`${imageInfo.taskIndex}-${imageInfo.imageIndex}`}
                       className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${
-                        index === previewImageIndex
+                        imageInfo.taskIndex === previewTaskIndex && imageInfo.imageIndex === previewImageIndex
                           ? 'border-blue-500 ring-2 ring-blue-200'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
-                      onClick={() => handleImageClick(index)}
+                      onClick={() => handleImageClick(imageInfo.taskIndex, imageInfo.imageIndex)}
                     >
-                      <img
-                        src={image.url}
-                        alt={`Generated image ${index + 1}`}
-                        className="w-full h-32 object-cover"
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
-                        {index + 1}
+                      <div className="w-full" style={{ aspectRatio: '1' }}>
+                        <img
+                          src={imageInfo.url}
+                          alt={`Generated image ${imageInfo.imageIndex + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1">
+                        <div className="text-center">任务{imageInfo.taskIndex + 1}-{imageInfo.imageIndex + 1}</div>
                       </div>
                     </div>
                   ))}

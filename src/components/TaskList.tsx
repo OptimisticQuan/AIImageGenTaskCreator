@@ -112,12 +112,6 @@ const TaskList: React.FC = () => {
     try {
       updateTask(taskId, { status: TaskStatus.Pending })
       
-      // Wait for any currently processing tasks to reduce load
-      while (currentlyProcessingRef.current.size >= settings.common!.batchSize) {
-        await delay(1000)
-        if (isPaused) return
-      }
-
       currentlyProcessingRef.current.add(taskId)
       updateTask(taskId, { status: TaskStatus.Generating, progress: 0 })
 
@@ -167,11 +161,40 @@ const TaskList: React.FC = () => {
 
     const processQueue = async () => {
       while (processingQueueRef.current.length > 0 && !isPaused) {
-        const taskId = processingQueueRef.current.shift()
-        if (taskId) {
-          await processTask(taskId)
-          await delay(500) // Small delay between tasks
+        // 启动批量任务，不超过batchSize
+        const tasksToStart: Promise<void>[] = []
+        
+        while (
+          tasksToStart.length < settings.common!.batchSize && 
+          processingQueueRef.current.length > 0 && 
+          currentlyProcessingRef.current.size < settings.common!.batchSize
+        ) {
+          const taskId = processingQueueRef.current.shift()
+          if (taskId) {
+            tasksToStart.push(processTask(taskId))
+          }
         }
+
+        // 等待这批任务完成或者有任务完成释放槽位
+        if (tasksToStart.length > 0) {
+          await Promise.race([
+            Promise.all(tasksToStart),
+            // 或者等待直到有槽位释放
+            new Promise<void>(resolve => {
+              const checkSlots = () => {
+                if (currentlyProcessingRef.current.size < settings.common!.batchSize) {
+                  resolve()
+                } else {
+                  setTimeout(checkSlots, 500)
+                }
+              }
+              checkSlots()
+            })
+          ])
+        }
+
+        // 小延迟避免过于频繁的检查
+        await delay(100)
       }
 
       // Wait for any remaining tasks to complete
@@ -197,11 +220,39 @@ const TaskList: React.FC = () => {
     
     const processQueue = async () => {
       while (processingQueueRef.current.length > 0 && !isPaused) {
-        const taskId = processingQueueRef.current.shift()
-        if (taskId) {
-          await processTask(taskId)
-          await delay(500)
+        // 启动批量任务，不超过batchSize
+        const tasksToStart: Promise<void>[] = []
+        
+        while (
+          tasksToStart.length < settings.common!.batchSize && 
+          processingQueueRef.current.length > 0 && 
+          currentlyProcessingRef.current.size < settings.common!.batchSize
+        ) {
+          const taskId = processingQueueRef.current.shift()
+          if (taskId) {
+            tasksToStart.push(processTask(taskId))
+          }
         }
+
+        // 等待这批任务完成或者有任务完成释放槽位
+        if (tasksToStart.length > 0) {
+          await Promise.race([
+            Promise.all(tasksToStart),
+            // 或者等待直到有槽位释放
+            new Promise<void>(resolve => {
+              const checkSlots = () => {
+                if (currentlyProcessingRef.current.size < settings.common!.batchSize) {
+                  resolve()
+                } else {
+                  setTimeout(checkSlots, 500)
+                }
+              }
+              checkSlots()
+            })
+          ])
+        }
+
+        await delay(100)
       }
 
       while (currentlyProcessingRef.current.size > 0) {
