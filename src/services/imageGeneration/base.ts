@@ -32,6 +32,17 @@ export abstract class BaseImageGenerator {
   protected onProgress?: (progress: GenerationProgress) => void
   protected onComplete?: (result: GenerationResult) => void
 
+  protected _progress: GenerationProgress = {
+    taskId: '',
+    progress: 0,
+    stage: 'preparing',
+    message: ''
+  }
+
+  get progress(): GenerationProgress {
+    return this._progress
+  }
+
   setProgressCallback(callback: (progress: GenerationProgress) => void) {
     this.onProgress = callback
   }
@@ -41,12 +52,14 @@ export abstract class BaseImageGenerator {
   }
 
   protected emitProgress(taskId: string, progress: number, stage: string, message?: string) {
+    this._progress = { taskId, progress, stage, message: message || '' }
     if (this.onProgress) {
       this.onProgress({ taskId, progress, stage, message })
     }
   }
 
   protected emitComplete(taskId: string, images: string[], success: boolean, error?: string) {
+    this._progress = { taskId, progress: 100, stage: 'completed', message: error || '' }
     if (this.onComplete) {
       this.onComplete({ taskId, images, success, error })
     }
