@@ -198,92 +198,98 @@ const TaskList: React.FC = () => {
   ).length
 
   return (
-    <div className="w-full max-w-4xl p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">
-          任务列表 ({tasks.length})
-        </h2>
-        
-        <div className="flex items-center space-x-4">
-          {/* Stats */}
-          <div className="flex items-center space-x-4 text-sm">
-            <span className="text-green-600">
-              完成: {completedTasksCount}
-            </span>
-            <span className="text-red-600">
-              失败: {failedTasksCount}
-            </span>
-            <span className="text-blue-600">
-              处理中: {processingTasksCount}
-            </span>
-          </div>
+    <div className="w-full max-w-4xl h-full flex flex-col">
+      {/* Fixed Header */}
+      <div className="flex-shrink-0 p-6 border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-800">
+            任务列表 ({tasks.length})
+          </h2>
+          
+          <div className="flex items-center space-x-4">
+            {/* Stats */}
+            <div className="flex items-center space-x-4 text-sm">
+              <span className="text-green-600">
+                完成: {completedTasksCount}
+              </span>
+              <span className="text-red-600">
+                失败: {failedTasksCount}
+              </span>
+              <span className="text-blue-600">
+                处理中: {processingTasksCount}
+              </span>
+            </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center space-x-2">
-            {!isProcessing ? (
-              <button
-                onClick={startBatchProcessing}
-                disabled={tasks.length === 0}
-                className="flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <PlayIcon className="h-4 w-4 mr-2" />
-                全部生成
-              </button>
-            ) : (
-              <button
-                onClick={isPaused ? resumeProcessing : pauseProcessing}
-                className="flex items-center px-4 py-2 bg-orange-600 text-white font-medium rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors"
-              >
-                {isPaused ? (
-                  <>
-                    <PlayIcon className="h-4 w-4 mr-2" />
-                    继续执行
-                  </>
-                ) : (
-                  <>
-                    <PauseIcon className="h-4 w-4 mr-2" />
-                    暂停执行
-                  </>
-                )}
-              </button>
-            )}
+            {/* Action buttons */}
+            <div className="flex items-center space-x-2">
+              {!isProcessing ? (
+                <button
+                  onClick={startBatchProcessing}
+                  disabled={tasks.length === 0}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <PlayIcon className="h-4 w-4 mr-2" />
+                  全部生成
+                </button>
+              ) : (
+                <button
+                  onClick={isPaused ? resumeProcessing : pauseProcessing}
+                  className="flex items-center px-4 py-2 bg-orange-600 text-white font-medium rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors"
+                >
+                  {isPaused ? (
+                    <>
+                      <PlayIcon className="h-4 w-4 mr-2" />
+                      继续执行
+                    </>
+                  ) : (
+                    <>
+                      <PauseIcon className="h-4 w-4 mr-2" />
+                      暂停执行
+                    </>
+                  )}
+                </button>
+              )}
 
-            <button
-              onClick={handleClearAll}
-              disabled={isProcessing}
-              className="flex items-center px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <TrashIcon className="h-4 w-4 mr-2" />
-              清空全部
-            </button>
+              <button
+                onClick={handleClearAll}
+                disabled={isProcessing}
+                className="flex items-center px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <TrashIcon className="h-4 w-4 mr-2" />
+                清空全部
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Task List */}
-      {tasks.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">暂无任务</p>
-          <p className="text-gray-400 text-sm mt-2">
-            在左侧输入提示词并点击"创建任务"开始
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {tasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              onEdit={handleEditTask}
-              onDelete={handleDeleteTask}
-              onRetry={handleRetryTask}
-              onPreview={handlePreviewTask}
-              isGloballyProcessing={isProcessing}
-            />
-          ))}
-        </div>
-      )}
+      {/* Scrollable Task List */}
+      <div className="flex-1 overflow-y-auto">
+        {tasks.length === 0 ? (
+          <div className="flex items-center justify-center h-full p-6">
+            <div className="text-center">
+              <p className="text-gray-500 text-lg">暂无任务</p>
+              <p className="text-gray-400 text-sm mt-2">
+                在左侧输入提示词并点击"创建任务"开始
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="p-6 space-y-4">
+            {tasks.map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
+                onRetry={handleRetryTask}
+                onPreview={handlePreviewTask}
+                isGloballyProcessing={isProcessing}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

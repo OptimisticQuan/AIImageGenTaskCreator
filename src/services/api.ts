@@ -78,14 +78,13 @@ export class APIService {
       const taskPrompts = await this.llmService.createTasksFromPrompt({
         mainPrompt,
         uploadedImagesCount: uploadedImages.length,
-        maxTasks: 8
       })
 
       const tasks: Task[] = taskPrompts.map((taskData) => ({
         id: crypto.randomUUID(),
         originalPrompt: mainPrompt,
         prompt: taskData.prompt,
-        attachedImageIds: uploadedImages.map(img => img.id),
+        attachedImageIds: taskData.imageIndexs?.map(index => uploadedImages[index]?.id) || [],
         status: TaskStatus.Idle,
         generatedImages: []
       }))

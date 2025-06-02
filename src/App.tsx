@@ -9,18 +9,18 @@ function App() {
   const { setIsSettingsModalOpen } = useAppStore()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen bg-gray-50 overflow-hidden">
       {/* Main Layout */}
-      <div className="flex flex-col lg:flex-row min-h-screen">
+      <div className="flex flex-col lg:flex-row h-full">
         {/* Left Panel - Input Area */}
-        <div className="lg:w-1/3 lg:max-w-2xl p-6 bg-white lg:bg-gray-50 border-r border-gray-200">
-          <div className="sticky top-6">
+        <div className="lg:w-1/3 lg:max-w-2xl bg-white lg:bg-gray-50 border-r border-gray-200 overflow-y-auto">
+          <div className="p-6">
             <PromptInputArea />
           </div>
         </div>
 
         {/* Right Panel - Task List */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 min-h-0">
           <TaskList />
         </div>
       </div>
