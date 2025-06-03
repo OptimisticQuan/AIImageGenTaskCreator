@@ -92,7 +92,7 @@ export class TuziImageGenerator extends BaseImageGenerator {
   }
 
   private buildPrompt(options: ImageGenerationOptions): string {
-    let prompt = options.prompt;
+    let prompt = options.prompt + "\n 生成4张";
     return prompt
   }
 
