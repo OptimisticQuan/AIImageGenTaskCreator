@@ -128,7 +128,17 @@ ${mainPrompt}
       }
 
       let parsedTasks: TaskPromptOriginal[]
-      const trimedContent = content.replace(/```json|```/g, '').trim() // 移除代码块标记
+      let trimedContent = content;
+      {
+        // 检查是否包含代码块标记
+        const codeBlockMatch = content.match(/```json\s*([\s\S]*?)```/);
+        if (codeBlockMatch) {
+          trimedContent = codeBlockMatch[1].trim(); // 提取代码块内容
+        } else {
+          // 如果没有代码块标记，直接使用内容
+          trimedContent = content.trim();
+        }
+      }
       try {
         parsedTasks = JSON.parse(trimedContent)
       } catch (parseError) {

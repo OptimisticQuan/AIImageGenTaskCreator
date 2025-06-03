@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react'
 import { PlusIcon, XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import { useAppStore } from '../store/appStore'
-import type { UploadedImage } from '../types'
+import { TaskStatus, type UploadedImage } from '../types'
 import { validateImageFile, createImagePreview } from '../utils'
 import { APIService } from '../services/api'
 
@@ -99,6 +99,28 @@ const PromptInputArea: React.FC = () => {
       setIsCreatingTasks(false)
     }
   }, [mainPrompt, uploadedImages, settings, addTasks])
+
+  const handleDirectCreate = useCallback(() => {
+    if (!mainPrompt.trim()) {
+      alert('请输入提示词')
+      return
+    }
+
+    // Create a single task directly from the main prompt
+    const directTask = {
+      id: crypto.randomUUID(),
+      prompt: mainPrompt.trim(),
+      originalPrompt: mainPrompt.trim(),
+      referenceImages: uploadedImages?.map(img => img.id) || [],
+      status: TaskStatus.Idle,
+      generatedImages: []
+    }
+
+    addTasks([directTask])
+    
+    // Clear input after successful task creation
+    setMainPrompt('')
+  }, [mainPrompt, uploadedImages, addTasks])
 
   const removeImage = useCallback((id: string) => {
     removeUploadedImage(id)
@@ -237,24 +259,35 @@ const PromptInputArea: React.FC = () => {
         </div>
       )}
 
-      {/* Create Tasks Button */}
-      <button
-        onClick={handleCreateTasks}
-        disabled={!mainPrompt.trim() || isCreatingTasks || isProcessing}
-        className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        {isCreatingTasks ? (
-          <>
-            <div className="loading-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-            创建任务中...
-          </>
-        ) : (
-          <>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            创建任务
-          </>
-        )}
-      </button>
+      {/* Create Tasks Buttons */}
+      <div className="flex gap-3">
+        <button
+          onClick={handleDirectCreate}
+          disabled={!mainPrompt.trim() || isProcessing}
+          className="flex-1 flex items-center justify-center px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <PlusIcon className="h-5 w-5 mr-2" />
+          直接创建
+        </button>
+        
+        <button
+          onClick={handleCreateTasks}
+          disabled={!mainPrompt.trim() || isCreatingTasks || isProcessing}
+          className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isCreatingTasks ? (
+            <>
+              <div className="loading-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+              创建任务中...
+            </>
+          ) : (
+            <>
+              <PlusIcon className="h-5 w-5 mr-2" />
+              创建任务
+            </>
+          )}
+        </button>
+      </div>
     </div>
   )
 }
