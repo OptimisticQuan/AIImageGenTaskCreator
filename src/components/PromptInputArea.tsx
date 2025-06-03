@@ -13,12 +13,10 @@ const PromptInputArea: React.FC = () => {
   const [dragOver, setDragOver] = useState(false)
   const [draggedImageId, setDraggedImageId] = useState<string | null>(null)
   const [dragOverImageId, setDragOverImageId] = useState<string | null>(null)
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
 
   const {
-    uploadedImages,
-    addUploadedImage,
-    removeUploadedImage,
-    reorderUploadedImages,
+    addUploadedImages,
     addTasks,
     settings,
     isProcessing
@@ -37,13 +35,13 @@ const PromptInputArea: React.FC = () => {
             previewUrl,
             name: file.name
           }
-          addUploadedImage(uploadedImage)
+          setUploadedImages(prev => [...prev, uploadedImage])
         } catch (error) {
           console.error('Error creating image preview:', error)
         }
       }
     }
-  }, [addUploadedImage])
+  }, [setUploadedImages])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -89,9 +87,7 @@ const PromptInputArea: React.FC = () => {
       const apiService = new APIService(settings)
       const newTasks = await apiService.createTasksFromPrompt(mainPrompt, uploadedImages)
       addTasks(newTasks)
-      
-      // Clear input after successful task creation
-      setMainPrompt('')
+      addUploadedImages(uploadedImages)
     } catch (error) {
       console.error('Error creating tasks:', error)
       alert('创建任务失败，请检查设置和网络连接')
@@ -111,20 +107,26 @@ const PromptInputArea: React.FC = () => {
       id: crypto.randomUUID(),
       prompt: mainPrompt.trim(),
       originalPrompt: mainPrompt.trim(),
-      referenceImages: uploadedImages?.map(img => img.id) || [],
+      attachedImageIds: uploadedImages?.map(img => img.id) || [],
       status: TaskStatus.Idle,
       generatedImages: []
     }
+    console.log('Creating direct task:', directTask)
 
     addTasks([directTask])
-    
-    // Clear input after successful task creation
-    setMainPrompt('')
+    addUploadedImages(uploadedImages)
   }, [mainPrompt, uploadedImages, addTasks])
 
+  const handleReset = useCallback(() => {
+    setMainPrompt('')
+    setUploadedImages([])
+    setDraggedImageId(null)
+    setDragOverImageId(null)
+  }, [setMainPrompt, setUploadedImages, setDraggedImageId, setDragOverImageId])
+
   const removeImage = useCallback((id: string) => {
-    removeUploadedImage(id)
-  }, [removeUploadedImage])
+    setUploadedImages(prev => prev.filter(img => img.id !== id))
+  }, [setUploadedImages])
 
   const handleImageDragStart = useCallback((e: React.DragEvent, imageId: string) => {
     setDraggedImageId(imageId)
@@ -154,15 +156,15 @@ const PromptInputArea: React.FC = () => {
         const newImages = [...uploadedImages]
         const [draggedImage] = newImages.splice(draggedIndex, 1)
         newImages.splice(targetIndex, 0, draggedImage)
-        reorderUploadedImages(newImages)
+        setUploadedImages(newImages)
       }
     }
     setDragOverImageId(null)
-  }, [draggedImageId, uploadedImages, reorderUploadedImages])
+  }, [draggedImageId, uploadedImages, setUploadedImages])
 
   return (
     <div className="w-full max-w-2xl p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">AI批量生图工具</h2>
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">AI生图批量任务工具</h2>
       
       {/* Main Prompt Input */}
       <div className="mb-6">
@@ -262,6 +264,14 @@ const PromptInputArea: React.FC = () => {
       {/* Create Tasks Buttons */}
       <div className="flex gap-3">
         <button
+          onClick={handleReset}
+          disabled={isCreatingTasks}
+          className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <XMarkIcon className="h-5 w-5 mr-2" />
+          重置
+        </button>
+        <button
           onClick={handleDirectCreate}
           disabled={!mainPrompt.trim() || isProcessing}
           className="flex-1 flex items-center justify-center px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -283,7 +293,7 @@ const PromptInputArea: React.FC = () => {
           ) : (
             <>
               <PlusIcon className="h-5 w-5 mr-2" />
-              创建任务
+              智能创建任务
             </>
           )}
         </button>

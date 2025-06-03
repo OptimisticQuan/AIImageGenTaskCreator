@@ -15,6 +15,7 @@ const TaskList: React.FC = () => {
   const currentlyProcessingRef = useRef<Set<string>>(new Set())
 
   const {
+    clearUploadedImages,
     tasks,
     updateTask,
     deleteTask,
@@ -277,6 +278,7 @@ const TaskList: React.FC = () => {
         apiService.clearAllGenerators()
       }
       clearTasks()
+      clearUploadedImages()
     }
   }, [isProcessing, clearTasks, apiService])
 

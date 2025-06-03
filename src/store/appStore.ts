@@ -14,8 +14,8 @@ interface AppState {
   // Uploaded Images
   uploadedImages: UploadedImage[]
   addUploadedImage: (image: UploadedImage) => void
+  addUploadedImages: (images: UploadedImage[]) => void // Optional for batch uploads
   removeUploadedImage: (id: string) => void
-  reorderUploadedImages: (newOrder: UploadedImage[]) => void
   clearUploadedImages: () => void
 
   // Tasks
@@ -76,17 +76,33 @@ export const useAppStore = create<AppState>()(
         }
       },
       addUploadedImage: (image: UploadedImage) => {
-        set(state => ({
-          uploadedImages: [...state.uploadedImages, image]
-        }))
+        set(state => {
+          if (state.uploadedImages.some(img => img.id === image.id)) {
+            // If image already exists, update it
+            return {}
+          }
+          return ({
+            uploadedImages: [...state.uploadedImages, image]
+          })
+        })
+      },
+      addUploadedImages: (images: UploadedImage[]) => {
+        set(state => {
+          const existingIds = new Set(state.uploadedImages.map(img => img.id))
+          const newImages = images.filter(img => !existingIds.has(img.id))
+          if (newImages.length === 0) {
+            // If all images already exist, do nothing
+            return {}
+          }
+          return ({
+            uploadedImages: [...state.uploadedImages, ...images]
+          })
+        })
       },
       removeUploadedImage: (id: string) => {
         set(state => ({
           uploadedImages: state.uploadedImages.filter(img => img.id !== id)
         }))
-      },
-      reorderUploadedImages: (newOrder: UploadedImage[]) => {
-        set({ uploadedImages: newOrder })
       },
       clearUploadedImages: () => {
         set({ uploadedImages: [] })
