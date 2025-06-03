@@ -10,11 +10,9 @@ interface OpenAIConfig {
 
 export class OpenAIImageGenerator extends BaseImageGenerator {
   private client: OpenAI
-  private config: OpenAIConfig
 
   constructor(config: OpenAIConfig) {
     super()
-    this.config = config
     this.client = new OpenAI({
       apiKey: config.apiKey,
       baseURL: config.baseURL,
@@ -45,7 +43,7 @@ export class OpenAIImageGenerator extends BaseImageGenerator {
 
       this.emitProgress(taskId, 80, 'processing', '处理生成的图像...')
 
-      const imageUrls = response.data.map(image => image.url!).filter(Boolean)
+      const imageUrls = response!.data!.map(image => image.url!).filter(Boolean)
 
       // 如果是 DALL-E 3 但需要多张图片，需要多次调用
       if (model === 'dall-e-3' && (options.count || 1) > 1) {
@@ -61,7 +59,7 @@ export class OpenAIImageGenerator extends BaseImageGenerator {
             quality: quality as 'standard' | 'hd'
           })
           
-          if (additionalResponse.data[0]?.url) {
+          if (additionalResponse?.data?.[0]?.url) {
             imageUrls.push(additionalResponse.data[0].url)
           }
         }

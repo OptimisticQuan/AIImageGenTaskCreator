@@ -48,17 +48,64 @@ export class LLMService {
   async createTasksFromPrompt(options: CreateTasksOptions): Promise<TaskPrompt[]> {
     try {
       const { mainPrompt, uploadedImagesCount} = options
-      const prompt = `根据###包裹的用户提示词创建批量生成图片任务，注意将用户的批量类词语转为“图n"风格的单项任务词语，n为单一任务中的参考图本地序号，直接用 json 输出，使用json codeblock包裹，示例
-用户输入将所有图片转为吉卜力风格，上传了2张图片，文件名分别为0.png和1.png，生成的任务格式如下：
-[{
-"prompt": "把图1转为吉卜力风格",
-"attachment": [0.png]
-}，{
-"prompt": "把图1转为吉卜力风格",
-"attachment": [1.png]
-}]
+      const prompt = `你是AI批量任务创建助手。请根据用户提示词及可选的参考图，生成JSON任务列表。
+输出JSON Codeblock。每个任务对象有 "prompt" 字段；若用图，则有 "attachment" 字段（含文件名数组）。
 
-用户提供的文件列表为：[${Array.from({ length: uploadedImagesCount }, (_, i) => `${i}.png`).join(', ')}]，请确保每个任务都包含 prompt 字段，并且 attachment 字段包含对应的图片文件名。
+核心逻辑：
+1.  **解读用户意图**：分析用户提示词（###包裹部分）以确定：
+    *   是否需要参考图。
+    *   若无参考图，则按描述生成纯文本任务。
+    *   若有参考图，是为每个图生成独立任务，还是将多个图组合成一个任务。
+2.  **构建任务**：
+    *   **纯文本任务**：只有 "prompt" 字段。
+    *   **单图任务** (e.g., "所有图片转风格A")：为每个上传图片生成一个任务。"attachment" 含单个文件名。"prompt" 中用 "图1" 指代该附件。
+    *   **多图组合任务** (e.g., "图A风格画图B")：根据提示词组合图片。"attachment" 含多个文件名。"prompt" 中用 "图n" (n从1开始) 指代附件列表中的第n张图 (如 "图1", "图2")。
+
+重要："图n" 始终指代当前任务 "attachment" 列表中的第 n 个文件。
+
+示例1 (纯文本，多任务):
+用户提示词: 用吉卜力、像素风、赛博朋克风分别生一个女孩
+输出:
+\`\`\`json
+[{
+  "prompt": "吉卜力风格的女孩"
+}, {
+  "prompt": "像素风格的女孩"
+}, {
+  "prompt": "赛博朋克风格的女孩"
+}]
+\`\`\`
+
+示例2 (单图任务，批量处理):
+用户文件: ["0.png", "1.png"]
+用户提示词: 将所有图片转为吉卜力风格
+输出:
+\`\`\`json
+[{
+  "prompt": "把图1转为吉卜力风格",
+  "attachment": ["0.png"]
+}, {
+  "prompt": "把图1转为吉卜力风格",
+  "attachment": ["1.png"]
+}]
+\`\`\`
+
+示例3 (多图组合任务):
+用户文件: ["0.png", "1.png", "2.png", "3.png"]
+用户提示词: 将参考图两个一组，用第一张图的风格重绘第二张图
+输出:
+\`\`\`json
+[{
+  "prompt": "用图1的风格重绘图2",
+  "attachment": ["0.png", "1.png"]
+}, {
+  "prompt": "用图1的风格重绘图2",
+  "attachment": ["2.png", "3.png"]
+}]
+\`\`\`
+
+用户提供的文件列表为：[${uploadedImagesCount > 0 ? Array.from({ length: uploadedImagesCount }, (_, i) => `"${i}.png"`).join(', ') : '[]'}]
+
 用户提示词：
 ###
 ${mainPrompt}

@@ -130,16 +130,42 @@ const ImagePreviewModal: React.FC = () => {
   }, [currentImage, currentTask, previewImageIndex])
 
   const handleDownloadAll = useCallback(async () => {
-    if (!currentTask) return
+    if (!allImages || allImages.length == 0) return
     
-    const imageUrls = currentTask.generatedImages.map(img => img.url)
-    const zipFilename = `${currentTask.prompt.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_')}_all_images.zip`
+    const imageUrls = allImages.map(img => img.url)
+    const zipFilename = `all_images.zip`
     
     try {
       await downloadImagesAsZip(imageUrls, zipFilename)
     } catch (error) {
       console.error('Error downloading images as zip:', error)
-      alert('下载失败，请重试')
+      
+      // Provide fallback option
+      const shouldRetryIndividual = confirm(
+        '批量下载失败，可能是由于跨域限制。是否尝试逐个下载图片？'
+      )
+      
+      if (shouldRetryIndividual) {
+        // Download images individually
+        for (let i = 0; i < imageUrls.length; i++) {
+          const img = imageUrls[i]
+          const filename = generateUniqueFilename(
+            'generated_image.png',
+            currentTask.prompt,
+            i
+          )
+          
+          try {
+            downloadImage(img, filename)
+            // Add delay between downloads
+            if (i < imageUrls.length-1) {
+              await new Promise(resolve => setTimeout(resolve, 1000))
+            }
+          } catch (error) {
+            console.warn(`Failed to download image ${i + 1}:`, error)
+          }
+        }
+      }
     }
   }, [currentTask])
 
@@ -266,7 +292,7 @@ const ImagePreviewModal: React.FC = () => {
               /* Gallery View */
               <div className="p-4 max-h-[600px] overflow-y-auto">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {allImages.map((imageInfo, index) => (
+                  {allImages.map((imageInfo) => (
                     <div
                       key={`${imageInfo.taskIndex}-${imageInfo.imageIndex}`}
                       className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${

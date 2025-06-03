@@ -54,6 +54,21 @@ const SettingsModal: React.FC = () => {
     }
   }
 
+  const handleGetApiKey = (supplier: string) => {
+    let url = ''
+    switch (supplier) {
+      case 'OpenAI':
+        url = 'https://platform.openai.com/api-keys'
+        break
+      case 'Tuzi':
+        url = 'https://api.tu-zi.com/register?aff=jIii'
+        break
+      default:
+        return
+    }
+    window.open(url, '_blank')
+  }
+
   return (
     <Dialog open={isSettingsModalOpen} onClose={handleCancel} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" />
@@ -152,7 +167,7 @@ const SettingsModal: React.FC = () => {
                         value={formData.llm.baseUrl}
                         onChange={(e) => handleInputChange('llm', 'baseUrl', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="https://api.openai.com/v1/chat/completions"
+                        placeholder="https://api.openai.com/v1"
                       />
                     </div>
                     
@@ -224,8 +239,8 @@ const SettingsModal: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder={
                           formData.imageGeneration.supplier === 'OpenAI'
-                            ? 'https://api.openai.com/v1/images/generations'
-                            : 'http://localhost:7860'
+                            ? 'https://api.openai.com/v1'
+                            : 'https://api.tuzi.com/v1'
                         }
                       />
                     </div>
@@ -234,12 +249,20 @@ const SettingsModal: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         API Key
                       </label>
-                      <input
-                        type="password"
-                        value={formData.imageGeneration.apiKey || ''}
-                        onChange={(e) => handleInputChange('imageGeneration', 'apiKey', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
+                      <div className="flex space-x-2">
+                        <input
+                          type="password"
+                          value={formData.imageGeneration.apiKey || ''}
+                          onChange={(e) => handleInputChange('imageGeneration', 'apiKey', e.target.value)}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <button
+                          onClick={() => handleGetApiKey(formData.imageGeneration.supplier)}
+                          className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm"
+                        >
+                          获取
+                        </button>
+                      </div>
                     </div>
                     
                     <div>
@@ -254,7 +277,7 @@ const SettingsModal: React.FC = () => {
                         placeholder={
                           formData.imageGeneration.supplier === 'OpenAI'
                             ? 'dall-e-3'
-                            : 'sd_xl_base_1.0.safetensors'
+                            : 'gpt-4o-image-vip'
                         }
                       />
                     </div>

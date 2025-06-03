@@ -17,16 +17,64 @@ export const downloadImagesAsZip = async (imageUrls: string[], zipFilename: stri
   // Fetch all images and add to zip
   const imagePromises = imageUrls.map(async (url, index) => {
     try {
-      const response = await fetch(url)
+      // Try to fetch with CORS mode first
+      const response = await fetch(url, {
+        mode: 'cors',
+        credentials: 'omit',
+        headers: {
+          'Cache-Control': 'no-cache',
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const blob = await response.blob()
       const filename = `image_${index + 1}.png`
       zip.file(filename, blob)
     } catch (error) {
       console.error(`Failed to download image ${index + 1}:`, error)
+      
+      // Fallback: try to download directly using a different approach
+      try {
+        // Create a canvas to convert the image
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+          img.src = url
+        })
+        
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        canvas.width = img.width
+        canvas.height = img.height
+        
+        ctx?.drawImage(img, 0, 0)
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const filename = `image_${index + 1}.png`
+            zip.file(filename, blob)
+          }
+        }, 'image/png')
+      } catch (fallbackError) {
+        console.error(`Fallback also failed for image ${index + 1}:`, fallbackError)
+        // Skip this image if both methods fail
+      }
     }
   })
 
   await Promise.all(imagePromises)
+
+  // Check if any files were added to the zip
+  const files = Object.keys(zip.files)
+  if (files.length === 0) {
+    throw new Error('No images could be downloaded due to CORS restrictions')
+  }
 
   // Generate zip file and download
   const zipBlob = await zip.generateAsync({ type: 'blob' })

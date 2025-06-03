@@ -62,15 +62,15 @@ export interface AppSettings {
 // Default settings structure
 export const DEFAULT_SETTINGS: AppSettings = {
   llm: {
-    baseUrl: 'https://api.openai.com/v1/chat/completions',
+    baseUrl: 'https://api.openai.com/v1',
     apiKey: '',
     modelName: 'gpt-3.5-turbo',
   },
   imageGeneration: {
-    supplier: 'StableDiffusionWebUI', // Default example
-    baseUrl: 'http://localhost:7860',
+    supplier: 'Tuzi',
+    baseUrl: ' https://api.tuzi.com/v1',
     apiKey: '',
-    modelName: 'sd_xl_base_1.0.safetensors',
+    modelName: 'gpt-4o-image-vip',
   },
   common: {
     batchSize: 2, // Default batch size
