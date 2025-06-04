@@ -68,7 +68,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   imageGeneration: {
     supplier: 'Tuzi',
-    baseUrl: ' https://api.tuzi.com/v1',
+    baseUrl: ' https://api.tu-zi.com/v1',
     apiKey: '',
     modelName: 'gpt-4o-image-vip',
   },

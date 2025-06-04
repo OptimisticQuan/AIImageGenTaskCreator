@@ -17,7 +17,7 @@ export class TuziImageGenerator extends BaseImageGenerator {
     this.config = config
     this.client = new OpenAI({
       apiKey: config.apiKey,
-      baseURL: config.baseURL || 'https://api.tuzi.com/v1',
+      baseURL: config.baseURL || 'https://api.tu-zi.com/v1',
       dangerouslyAllowBrowser: true
     })
   }

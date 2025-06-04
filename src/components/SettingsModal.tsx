@@ -240,7 +240,7 @@ const SettingsModal: React.FC = () => {
                         placeholder={
                           formData.imageGeneration.supplier === 'OpenAI'
                             ? 'https://api.openai.com/v1'
-                            : 'https://api.tuzi.com/v1'
+                            : 'https://api.tu-zi.com/v1'
                         }
                       />
                     </div>
