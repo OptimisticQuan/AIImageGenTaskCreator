@@ -11,6 +11,9 @@ const PromptInputArea: React.FC = () => {
   const [dragOver, setDragOver] = useState(false)
   const [draggedImageId, setDraggedImageId] = useState<string | null>(null)
   const [dragOverImageId, setDragOverImageId] = useState<string | null>(null)
+  // Add touch-specific state
+  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   const {
     mainPrompt,
@@ -20,7 +23,6 @@ const PromptInputArea: React.FC = () => {
     currentUploadedImages,
     addCurrentUploadedImage,
     removeCurrentUploadedImage,
-    setCurrentUploadedImages,
     clearCurrentUploadedImages,
     reorderCurrentUploadedImages,
     addUploadedImages,
@@ -161,6 +163,56 @@ const PromptInputArea: React.FC = () => {
     setDragOverImageId(null)
   }, [draggedImageId, reorderCurrentUploadedImages])
 
+  // Add touch event handlers for mobile support
+  const handleTouchStart = useCallback((e: React.TouchEvent, imageId: string) => {
+    const touch = e.touches[0]
+    setTouchStartPos({ x: touch.clientX, y: touch.clientY })
+    setDraggedImageId(imageId)
+    setIsDragging(false)
+  }, [])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!draggedImageId || !touchStartPos) return
+    
+    const touch = e.touches[0]
+    const deltaX = Math.abs(touch.clientX - touchStartPos.x)
+    const deltaY = Math.abs(touch.clientY - touchStartPos.y)
+    
+    // Start dragging if moved more than 10px
+    if (!isDragging && (deltaX > 10 || deltaY > 10)) {
+      setIsDragging(true)
+    }
+    
+    if (isDragging) {
+      
+      // Find the element under the touch point
+      const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY)
+      const imageElement = elementBelow?.closest('[data-image-id]')
+      
+      if (imageElement) {
+        const targetImageId = imageElement.getAttribute('data-image-id')
+        if (targetImageId && targetImageId !== draggedImageId) {
+          setDragOverImageId(targetImageId)
+        } else {
+          setDragOverImageId(null)
+        }
+      } else {
+        setDragOverImageId(null)
+      }
+    }
+  }, [draggedImageId, touchStartPos, isDragging])
+
+  const handleTouchEnd = useCallback(() => {
+    if (isDragging && draggedImageId && dragOverImageId) {
+      reorderCurrentUploadedImages(draggedImageId, dragOverImageId)
+    }
+    
+    setDraggedImageId(null)
+    setDragOverImageId(null)
+    setTouchStartPos(null)
+    setIsDragging(false)
+  }, [isDragging, draggedImageId, dragOverImageId, reorderCurrentUploadedImages])
+
   return (
     <div className="w-full max-w-2xl p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">AI生图批量任务工具</h2>
@@ -224,24 +276,32 @@ const PromptInputArea: React.FC = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {currentUploadedImages.map((image) => (
               <div 
-                key={image.id} 
+                key={image.id}
+                data-image-id={image.id}
                 className={`relative group cursor-move transition-all duration-200 ${
-                  draggedImageId === image.id ? 'opacity-50' : ''
+                  draggedImageId === image.id ? 'opacity-50 scale-95' : ''
                 } ${
                   dragOverImageId === image.id ? 'scale-105 ring-2 ring-blue-500' : ''
+                } ${
+                  isDragging && draggedImageId === image.id ? 'z-50' : ''
                 }`}
                 draggable
                 onDragStart={(e) => handleImageDragStart(e, image.id)}
                 onDragEnd={handleImageDragEnd}
                 onDragOver={(e) => handleImageDragOver(e, image.id)}
                 onDrop={(e) => handleImageDrop(e, image.id)}
+                onTouchStart={(e) => handleTouchStart(e, image.id)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{
+                  touchAction: 'none' // Prevent default touch behaviors
+                }}
               >
-                <div className="relative w-full" style={{ aspectRatio: 'auto' }}>
+                <div className="relative w-full h-full aspect-square rounded-lg border border-gray-200 dark:border-gray-600">
                   <img
                     src={image.previewUrl}
                     alt={image.name}
-                    className="w-full h-auto object-contain rounded-lg border border-gray-200 dark:border-gray-600 max-h-32"
-                    style={{ minHeight: '80px' }}
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-full max-h-full object-contain"
                   />
                   <button
                     onClick={() => removeImage(image.id)}
