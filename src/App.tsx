@@ -4,44 +4,105 @@ import PromptInputArea from './components/PromptInputArea'
 import TaskList from './components/TaskList'
 import SettingsModal from './components/SettingsModal'
 import ImagePreviewModal from './components/ImagePreviewModal'
+import MobileTabBar from './components/MobileTabBar'
+import ThemeToggle from './components/ThemeToggle'
+import { useEffect } from 'react'
+import { cn } from './utils'
 
 function App() {
-  const { setIsSettingsModalOpen } = useAppStore()
+  const { 
+    setIsSettingsModalOpen, 
+    settings,
+    isMobile,
+    setIsMobile,
+    mobileActiveTab
+  } = useAppStore()
+
+  // Handle responsive layout and theme initialization
+  useEffect(() => {
+    // Initialize theme from settings
+    if (settings.common?.theme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+
+    // Handle responsive layout
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024 // lg breakpoint
+      setIsMobile(mobile)
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [settings.common?.theme, setIsMobile])
 
   return (
-    <div className="h-screen bg-gray-50 overflow-hidden">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Main Layout */}
       <div className="flex flex-row h-full">
-        {/* Left Panel - Input Area */}
-        <div className="lg:w-1/3 lg:max-w-2xl bg-white lg:bg-gray-50 border-r border-gray-200 overflow-y-auto">
-          <div className="p-6">
-            <PromptInputArea />
-          </div>
-        </div>
+        {/* Desktop Layout */}
+        {!isMobile && (
+          <>
+            {/* Left Panel - Input Area */}
+            <div className="w-1/3 max-w-2xl bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+              <div className="p-6">
+                <PromptInputArea />
+              </div>
+            </div>
 
-        {/* Right Panel - Task List */}
-        <div className="flex-1 min-h-0">
-          <TaskList />
-        </div>
+            {/* Right Panel - Task List */}
+            <div className="flex-1 min-h-0">
+              <TaskList />
+            </div>
+          </>
+        )}
+
+        {/* Mobile Layout */}
+        {isMobile && (
+          <div className="flex-1 pb-16"> {/* Add bottom padding for tab bar */}
+            {mobileActiveTab === 'input' && (
+              <div className="h-full overflow-y-auto bg-white dark:bg-gray-800">
+                <div className="p-4">
+                  <PromptInputArea />
+                </div>
+              </div>
+            )}
+            {mobileActiveTab === 'tasks' && (
+              <div className="h-full">
+                <TaskList />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Fixed Buttons */}
-      <div className="fixed bottom-6 left-6 flex flex-row space-x-3 z-40">
-
+      
+      <div className={cn(
+        "fixed flex z-40",
+        isMobile ? "flex-col-reverse left-1 bottom-20 space-y-3 space-y-reverse" : "flex-row left-6 bottom-6 space-x-3"
+        )}>
         {/* Settings Button */}
         <button
           onClick={() => setIsSettingsModalOpen(true)}
-          className="p-3 bg-gray-800 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors"
+          className="p-3 bg-gray-800 dark:bg-gray-700 text-white rounded-full shadow-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
           title="设置"
         >
           <Cog6ToothIcon className="h-6 w-6" />
         </button>
+
+        <ThemeToggle />
+        
         {/* GitHub Button */}
         <a
           href="https://github.com/OptimisticQuan/AIImageGenTaskCreator"
           target="_blank"
           rel="noopener noreferrer"
-          className="p-3 bg-gray-800 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors"
+          className="p-3 bg-gray-800 dark:bg-gray-700 text-white rounded-full shadow-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
           title="查看源代码"
         >
           <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
@@ -49,6 +110,9 @@ function App() {
           </svg>
         </a>
       </div>
+
+      {/* Mobile Tab Bar */}
+      {isMobile && <MobileTabBar />}
 
       {/* Modals */}
       <SettingsModal />

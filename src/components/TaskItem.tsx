@@ -76,14 +76,14 @@ const TaskItem: React.FC<TaskItemProps> = ({
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-md p-4 border-l-4 transition-all hover:shadow-lg ${
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border-l-4 transition-all hover:shadow-lg ${
         task.status === TaskStatus.Completed
           ? 'border-green-500'
           : task.status === TaskStatus.Failed
           ? 'border-red-500'
           : task.status === TaskStatus.Generating
           ? 'border-blue-500'
-          : 'border-gray-300'
+          : 'border-gray-300 dark:border-gray-600'
       } ${isClickable ? 'cursor-pointer' : ''}`}
       onClick={isClickable ? handlePreview : undefined}
     >
@@ -95,13 +95,13 @@ const TaskItem: React.FC<TaskItemProps> = ({
           </span>
           {task.status === TaskStatus.Generating && task.progress !== undefined && (
             <div className="flex items-center space-x-2">
-              <div className="w-20 bg-gray-200 rounded-full h-2">
+              <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                 <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${task.progress}%` }}
                 ></div>
               </div>
-              <span className="text-xs text-gray-500">{task.progress}%</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{task.progress}%</span>
             </div>
           )}
         </div>
@@ -114,7 +114,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 e.stopPropagation()
                 handlePreview()
               }}
-              className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
+              className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
               title="查看生成的图片"
             >
               <EyeIcon className="h-4 w-4" />
@@ -127,7 +127,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 e.stopPropagation()
                 handleRetry()
               }}
-              className="p-1 text-orange-600 hover:text-orange-800 transition-colors"
+              className="p-1 text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 transition-colors"
               title="重试"
               disabled={isGloballyProcessing}
             >
@@ -141,7 +141,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 e.stopPropagation()
                 handleStartEdit()
               }}
-              className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+              className="p-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
               title="编辑提示词"
             >
               <PencilIcon className="h-4 w-4" />
@@ -155,7 +155,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                   e.stopPropagation()
                   handleSaveEdit()
                 }}
-                className="p-1 text-green-600 hover:text-green-800 transition-colors"
+                className="p-1 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
                 title="保存"
               >
                 <CheckIcon className="h-4 w-4" />
@@ -165,7 +165,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                   e.stopPropagation()
                   handleCancelEdit()
                 }}
-                className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                className="p-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                 title="取消"
               >
                 <XMarkIcon className="h-4 w-4" />
@@ -179,7 +179,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 e.stopPropagation()
                 handleDelete()
               }}
-              className="p-1 text-red-600 hover:text-red-800 transition-colors"
+              className="p-1 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
               title="删除任务"
             >
               <TrashIcon className="h-4 w-4" />
@@ -194,12 +194,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
           <textarea
             value={editablePrompt}
             onChange={(e) => setEditablePrompt(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             rows={3}
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <p className="text-gray-800 text-sm leading-relaxed">
+          <p className="text-gray-800 dark:text-gray-200 text-sm leading-relaxed">
             {task.prompt}
           </p>
         )}
@@ -208,14 +208,14 @@ const TaskItem: React.FC<TaskItemProps> = ({
       {/* Attached Images */}
       {attachedImages.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs text-gray-500 mb-2">参考图片:</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">参考图片:</p>
           <div className="flex space-x-2 overflow-x-auto">
             {attachedImages.map((image) => (
               <img
                 key={image.id}
                 src={image.previewUrl}
                 alt={image.name}
-                className="w-12 h-12 object-cover rounded border border-gray-200 flex-shrink-0"
+                className="w-12 h-12 object-cover rounded border border-gray-200 dark:border-gray-600 flex-shrink-0"
               />
             ))}
           </div>
@@ -225,7 +225,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
       {/* Generated Images Preview */}
       {task.generatedImages.length > 0 && (
         <div className="mt-3">
-          <p className="text-xs text-gray-500 mb-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
             生成的图片 ({task.generatedImages.length}):
           </p>
           <div className="flex space-x-2 overflow-x-auto">
@@ -234,12 +234,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 key={image.id}
                 src={image.url}
                 alt={`Generated image ${index + 1}`}
-                className="w-12 h-12 object-cover rounded border border-gray-200 flex-shrink-0"
+                className="w-12 h-12 object-cover rounded border border-gray-200 dark:border-gray-600 flex-shrink-0"
               />
             ))}
             {task.generatedImages.length > 4 && (
-              <div className="w-12 h-12 bg-gray-100 rounded border border-gray-200 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs text-gray-500">+{task.generatedImages.length - 4}</span>
+              <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs text-gray-500 dark:text-gray-400">+{task.generatedImages.length - 4}</span>
               </div>
             )}
           </div>
@@ -248,8 +248,8 @@ const TaskItem: React.FC<TaskItemProps> = ({
 
       {/* Error Message */}
       {task.status === TaskStatus.Failed && task.error && (
-        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-red-800 text-xs">{task.error}</p>
+        <div className="mt-3 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md">
+          <p className="text-red-800 dark:text-red-300 text-xs">{task.error}</p>
         </div>
       )}
     </div>

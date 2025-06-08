@@ -6,7 +6,7 @@ import { useAppStore } from '../store/appStore'
 import { TaskStatus } from '../types'
 import type { GeneratedImage } from '../types'
 import { GenerationProgress, GenerationResult } from '../services/imageGeneration/factory'
-import { delay } from '../utils'
+import { cn, delay } from '../utils'
 import TaskItem from './TaskItem'
 
 const TaskList: React.FC = () => {
@@ -15,6 +15,7 @@ const TaskList: React.FC = () => {
   const currentlyProcessingRef = useRef<Set<string>>(new Set())
 
   const {
+    isMobile,
     clearUploadedImages,
     tasks,
     updateTask,
@@ -291,33 +292,38 @@ const TaskList: React.FC = () => {
   return (
     <div className="w-full h-full flex flex-col">
       {/* Fixed Header */}
-      <div className="flex-shrink-0 p-6 border-b border-gray-200 bg-white">
+      <div className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             任务列表 ({tasks.length})
           </h2>
           
           <div className="flex items-center space-x-4">
             {/* Stats */}
-            <div className="flex items-center space-x-4 text-sm">
-              <span className="text-green-600">
+            <div className={cn("flex items-center text-sm"
+              , isMobile ? "flex-col space-y-1" : "flex-row space-x-4"
+            )}>
+              <span className="text-green-600 dark:text-green-400">
                 完成: {completedTasksCount}
               </span>
-              <span className="text-red-600">
+              <span className="text-red-600 dark:text-red-400">
                 失败: {failedTasksCount}
               </span>
-              <span className="text-blue-600">
+              <span className="text-blue-600 dark:text-blue-400">
                 处理中: {processingTasksCount}
               </span>
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center space-x-2">
+            <div className={cn(
+              "flex items-center",
+              isMobile ? "flex-col space-y-2" : "flex-row space-x-2"
+            )}>
               {!isProcessing ? (
                 <button
                   onClick={startBatchProcessing}
                   disabled={tasks.length === 0}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center px-4 py-2 bg-green-600 dark:bg-green-700 text-white font-medium rounded-md hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <PlayIcon className="h-4 w-4 mr-2" />
                   全部生成
@@ -325,7 +331,7 @@ const TaskList: React.FC = () => {
               ) : (
                 <button
                   onClick={isPaused ? resumeProcessing : pauseProcessing}
-                  className="flex items-center px-4 py-2 bg-orange-600 text-white font-medium rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors"
+                  className="flex items-center px-4 py-2 bg-orange-600 dark:bg-orange-700 text-white font-medium rounded-md hover:bg-orange-700 dark:hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors"
                 >
                   {isPaused ? (
                     <>
@@ -344,7 +350,7 @@ const TaskList: React.FC = () => {
               <button
                 onClick={handleClearAll}
                 disabled={isProcessing}
-                className="flex items-center px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center px-4 py-2 bg-red-600 dark:bg-red-700 text-white font-medium rounded-md hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <TrashIcon className="h-4 w-4 mr-2" />
                 清空全部
@@ -355,13 +361,18 @@ const TaskList: React.FC = () => {
       </div>
 
       {/* Scrollable Task List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
         {tasks.length === 0 ? (
           <div className="flex items-center justify-center h-full p-6">
             <div className="text-center">
-              <p className="text-gray-500 text-lg">暂无任务</p>
-              <p className="text-gray-400 text-sm mt-2">
-                在左侧输入提示词并点击"创建任务"开始
+              <div className="text-gray-400 dark:text-gray-500 mb-4">
+                <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">暂无任务</h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                在左侧输入提示词创建你的第一个AI生图任务
               </p>
             </div>
           </div>

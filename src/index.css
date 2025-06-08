@@ -26,13 +26,25 @@ code {
   background: #f1f1f1;
 }
 
+.dark ::-webkit-scrollbar-track {
+  background: #374151;
+}
+
 ::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 3px;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 /* Loading animation */
@@ -47,9 +59,22 @@ code {
 
 /* Drag and drop styles */
 .drag-over {
-  @apply border-blue-500 bg-blue-50;
+  @apply border-blue-500 bg-blue-50 dark:bg-blue-900/20;
 }
 
 .dragging {
   @apply opacity-50;
+}
+
+/* Mobile optimizations */
+@media (max-width: 1024px) {
+  /* Ensure mobile layout doesn't have horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Improve touch targets on mobile */
+  button {
+    min-height: 44px;
+  }
 }

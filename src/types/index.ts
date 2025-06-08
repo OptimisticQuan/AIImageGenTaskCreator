@@ -50,6 +50,7 @@ export interface ImageGenerationSettings {
 
 export interface CommonSettings {
   batchSize: number; // 批量执行每批数量
+  theme: 'light' | 'dark'; // 主题设置
   // 其他通用设置可以在这里添加
 }
 
@@ -74,5 +75,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   common: {
     batchSize: 2, // Default batch size
+    theme: 'light', // Default theme
   }
 };

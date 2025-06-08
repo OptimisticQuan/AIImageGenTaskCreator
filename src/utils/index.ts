@@ -160,3 +160,8 @@ export const getTaskStatusText = (status: string): string => {
       return '未知状态'
   }
 }
+
+
+export const cn = (...classes: (string | boolean | null | undefined)[]): string => {
+  return classes.filter(Boolean).join(' ')
+}

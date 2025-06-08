@@ -11,10 +11,33 @@ interface AppState {
   settings: AppSettings
   updateSettings: (newSettings: AppSettings) => void
 
-  // Uploaded Images
+  // Theme management
+  toggleTheme: () => void
+
+  // Mobile UI state
+  isMobile: boolean
+  setIsMobile: (isMobile: boolean) => void
+  mobileActiveTab: 'input' | 'tasks'
+  setMobileActiveTab: (tab: 'input' | 'tasks') => void
+
+  // Main prompt input state
+  mainPrompt: string
+  setMainPrompt: (prompt: string) => void
+  isCreatingTasks: boolean
+  setIsCreatingTasks: (isCreating: boolean) => void
+
+  // Uploaded Images for current input
+  currentUploadedImages: UploadedImage[]
+  addCurrentUploadedImage: (image: UploadedImage) => void
+  removeCurrentUploadedImage: (id: string) => void
+  setCurrentUploadedImages: (images: UploadedImage[]) => void
+  clearCurrentUploadedImages: () => void
+  reorderCurrentUploadedImages: (draggedId: string, targetId: string) => void
+
+  // Uploaded Images (persistent storage)
   uploadedImages: UploadedImage[]
   addUploadedImage: (image: UploadedImage) => void
-  addUploadedImages: (images: UploadedImage[]) => void // Optional for batch uploads
+  addUploadedImages: (images: UploadedImage[]) => void
   removeUploadedImage: (id: string) => void
   clearUploadedImages: () => void
 
@@ -50,6 +73,17 @@ export const useAppStore = create<AppState>()(
       // Settings
       settings: DEFAULT_SETTINGS,
 
+      // Mobile UI state
+      isMobile: false,
+      mobileActiveTab: 'input',
+
+      // Main prompt input state
+      mainPrompt: '',
+      isCreatingTasks: false,
+
+      // Current uploaded images (for input area)
+      currentUploadedImages: [],
+
       // Uploaded Images
       uploadedImages: [],
 
@@ -74,6 +108,81 @@ export const useAppStore = create<AppState>()(
         if (apiService) {
           apiService.updateSettings(newSettings)
         }
+        // Apply theme to document
+        if (newSettings.common?.theme === 'dark') {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
+      },
+      toggleTheme: () => {
+        set(state => {
+          const currentTheme = state.settings.common?.theme || 'light'
+          const newTheme: 'light' | 'dark' = currentTheme === 'light' ? 'dark' : 'light'
+          const newSettings = {
+            ...state.settings,
+            common: {
+              batchSize: state.settings.common?.batchSize || DEFAULT_SETTINGS.common?.batchSize || 2,
+              theme: newTheme
+            }
+          }
+          
+          // Apply theme to document
+          if (newTheme === 'dark') {
+            document.documentElement.classList.add('dark')
+          } else {
+            document.documentElement.classList.remove('dark')
+          }
+          
+          return { settings: newSettings }
+        })
+      },
+      setIsMobile: (isMobile: boolean) => {
+        set({ isMobile })
+      },
+      setMobileActiveTab: (tab: 'input' | 'tasks') => {
+        set({ mobileActiveTab: tab })
+      },
+      setMainPrompt: (prompt: string) => {
+        set({ mainPrompt: prompt })
+      },
+      setIsCreatingTasks: (isCreating: boolean) => {
+        set({ isCreatingTasks: isCreating })
+      },
+      addCurrentUploadedImage: (image: UploadedImage) => {
+        set(state => {
+          if (state.currentUploadedImages.some(img => img.id === image.id)) {
+            return {}
+          }
+          return {
+            currentUploadedImages: [...state.currentUploadedImages, image]
+          }
+        })
+      },
+      removeCurrentUploadedImage: (id: string) => {
+        set(state => ({
+          currentUploadedImages: state.currentUploadedImages.filter(img => img.id !== id)
+        }))
+      },
+      setCurrentUploadedImages: (images: UploadedImage[]) => {
+        set({ currentUploadedImages: images })
+      },
+      clearCurrentUploadedImages: () => {
+        set({ currentUploadedImages: [] })
+      },
+      reorderCurrentUploadedImages: (draggedId: string, targetId: string) => {
+        set(state => {
+          const draggedIndex = state.currentUploadedImages.findIndex(img => img.id === draggedId)
+          const targetIndex = state.currentUploadedImages.findIndex(img => img.id === targetId)
+          
+          if (draggedIndex !== -1 && targetIndex !== -1) {
+            const newImages = [...state.currentUploadedImages]
+            const [draggedImage] = newImages.splice(draggedIndex, 1)
+            newImages.splice(targetIndex, 0, draggedImage)
+            return { currentUploadedImages: newImages }
+          }
+          return {}
+        })
       },
       addUploadedImage: (image: UploadedImage) => {
         set(state => {
@@ -149,7 +258,11 @@ export const useAppStore = create<AppState>()(
       name: 'ai-image-gen-storage',
       version: 1,
       // Only persist settings, not temporary data like tasks and images
-      partialize: (state) => ({ settings: state.settings }),
+      partialize: (state) => ({ 
+        settings: state.settings,
+        mainPrompt: state.mainPrompt,
+        currentUploadedImages: state.currentUploadedImages
+      }),
       // Merge function to handle potential schema changes
       merge: (persistedState, currentState) => ({
         ...currentState,
