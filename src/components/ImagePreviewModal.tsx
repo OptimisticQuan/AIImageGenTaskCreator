@@ -183,7 +183,7 @@ const ImagePreviewModal: React.FC = () => {
       <div className="fixed inset-0 bg-black/90" />
       
       <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-        <DialogPanel className="max-w-6xl w-full max-h-[95vh] bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
+        <DialogPanel className="max-w-6xl w-full h-[95vh] bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-4">
@@ -235,23 +235,21 @@ const ImagePreviewModal: React.FC = () => {
           </div>
 
           {/* Content */}
-          <div className="relative">
+          <div className="relative flex-1 overflow-hidden">
             {currentView === 'single' ? (
               /* Single Image View */
-              <div className="relative bg-gray-50 dark:bg-gray-900">
-                <div className="flex items-center justify-center min-h-[400px] max-h-[600px] p-4">
-                  {currentTask && currentImage ? (
-                    <img
-                      src={currentImage.url}
-                      alt={`Generated image ${previewImageIndex + 1}`}
-                      className="max-w-full max-h-full object-contain rounded"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-64">
-                      <PhotoIcon className="h-16 w-16 text-gray-400 dark:text-gray-600" />
-                    </div>
-                  )}
-                </div>
+              <div className="relative h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+                {currentTask && currentImage ? (
+                  <img
+                    src={currentImage.url}
+                    alt={`Generated image ${previewImageIndex + 1}`}
+                    className="max-w-full max-h-full object-contain rounded"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <PhotoIcon className="h-16 w-16 text-gray-400 dark:text-gray-600" />
+                  </div>
+                )}
                 
                 {/* Navigation buttons */}
                 {currentTask && currentTask.generatedImages.length > 1 && (
@@ -273,7 +271,7 @@ const ImagePreviewModal: React.FC = () => {
               </div>
             ) : (
               /* Gallery View */
-              <div className="p-4 max-h-[600px] overflow-y-auto bg-white dark:bg-gray-800">
+              <div className="p-4 bg-white dark:bg-gray-800 h-full overflow-y-auto">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {allImages.map((imageInfo) => (
                     <div

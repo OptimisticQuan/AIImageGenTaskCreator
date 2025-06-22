@@ -49,7 +49,7 @@ function App() {
         {!isMobile && (
           <>
             {/* Left Panel - Input Area */}
-            <div className="w-1/3 max-w-2xl bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+            <div className="w-1/3 max-w-5xl bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
               <div className="p-6">
                 <PromptInputArea />
               </div>

@@ -1,7 +1,7 @@
 // src/store/index.ts
 
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, devtools } from 'zustand/middleware'
 import type { AppSettings, Task, UploadedImage } from '../types'
 import { DEFAULT_SETTINGS } from '../types'
 import { APIService } from '../services/api'
@@ -68,7 +68,7 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>()(
-  persist(
+  devtools(persist(
     (set, get) => ({
       // Settings
       settings: DEFAULT_SETTINGS,
@@ -278,5 +278,5 @@ export const useAppStore = create<AppState>()(
         }
       },
     }
-  )
+  ))
 )

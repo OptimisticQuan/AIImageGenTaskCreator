@@ -214,7 +214,7 @@ const PromptInputArea: React.FC = () => {
   }, [isDragging, draggedImageId, dragOverImageId, reorderCurrentUploadedImages])
 
   return (
-    <div className="w-full max-w-2xl p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+    <div className="w-full max-w-5xl p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">AI生图批量任务工具</h2>
       
       {/* Main Prompt Input */}
